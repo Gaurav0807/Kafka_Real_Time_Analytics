@@ -7,7 +7,7 @@ This repository contains scripts for setting up a basic Apache Kafka environment
 ## Prerequisites
 
 - Docker installed on your machine.
-- Python 3.x installed.
+- Python 3.8 installed.
 - PostgreSQL database set up.
 
 ## Kafka Setup
