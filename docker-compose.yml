@@ -31,4 +31,30 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: crypto_db 
+      POSTGRES_DB: crypto_db
+
+  spark-master:
+    image: bitnami/spark:3
+    container_name: spark-master
+    ports:
+      - "7077:7077" #default port for spark master to listen for spark worker registration and communication.
+      - "4040:4040" #This port is for Spark-master web-UI
+    networks:
+      - spark_network
+  
+  spark-worker:
+    image: bitnami/spark:3
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 2g #set amount of memory that spark will use
+      SPARK_WORKER_CORES: 2 # cpu cores that spark worker will use.
+      #replicas: 3 #Here we can set desired number of worker nodes.
+    networks:
+      - spark_network
+
+networks:
+  spark_network:
+    driver: bridge 

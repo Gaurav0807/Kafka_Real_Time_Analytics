@@ -90,3 +90,15 @@ This repository contains scripts for setting up a basic Apache Kafka environment
     - Modify Docker Compose file (docker-compose.yml) for advanced Kafka configurations.
     - Ensure proper network configurations between containers.
 
+
+
+# Spark Streaming Code to run
+
+    - Run Producer script
+    bash
+    python3 producer.py
+    - Structure_streaming.py or streaming_trigger.py Script 
+    bash
+    python3 Structure_streaming.py --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0
+
+
