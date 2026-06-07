@@ -1,4 +1,3 @@
-version: '3'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.1
@@ -6,6 +5,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - spark_network
 
   broker:
     image: confluentinc/cp-kafka:7.0.1
@@ -17,12 +18,14 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT #PLAINTEXT refers to communication mechanism without any encryption or security measure
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-  
+    networks:
+      - spark_network
+
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -32,29 +35,38 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: crypto_db
-
-  spark-master:
-    image: bitnami/spark:3
-    container_name: spark-master
-    ports:
-      - "7077:7077" #default port for spark master to listen for spark worker registration and communication.
-      - "4040:4040" #This port is for Spark-master web-UI
     networks:
       - spark_network
-  
+
+  spark-master:
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    container_name: spark-master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+    volumes:
+      - ./src:/app_code
+    networks:
+      - spark_network
+
   spark-worker:
-    image: bitnami/spark:3
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
     container_name: spark-worker
     depends_on:
       - spark-master
     environment:
-      SPARK_MASTER_URL: spark://spark-master:7077
-      SPARK_WORKER_MEMORY: 2g #set amount of memory that spark will use
-      SPARK_WORKER_CORES: 2 # cpu cores that spark worker will use.
-      #replicas: 3 #Here we can set desired number of worker nodes.
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=2
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./src:/app_code
     networks:
       - spark_network
 
 networks:
   spark_network:
-    driver: bridge 
+    driver: bridge
